@@ -64,8 +64,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
     // Configure Android WebView settings
     if (controller.platform is AndroidWebViewController) {
-      (controller.platform as AndroidWebViewController)
-          .setMediaPlaybackRequiresUserGesture(false);
+      AndroidWebViewController androidController = controller.platform as AndroidWebViewController;
+      androidController.setMediaPlaybackRequiresUserGesture(false);
     }
 
     controller
@@ -95,15 +95,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
             });
           },
           onWebResourceError: (WebResourceError error) {
-            if (!_hasLoadedSuccessfully &&
-                !error.description.contains('ERR_NAME_NOT_RESOLVED') &&
-                !error.description.contains('ERR_CONNECTION_REFUSED') &&
-                !error.description.contains('ERR_INTERNET_DISCONNECTED')) {
-              setState(() {
-                _errorMessage = 'Error loading page: ${error.description}';
-                _isLoading = false;
-              });
-            }
+            setState(() {
+              _isLoading = false;
+              if (error.description.contains('ERR_NAME_NOT_RESOLVED')) {
+                _errorMessage = 'لا يمكن الوصول إلى الموقع. يرجى التحقق من الاتصال بالإنترنت.';
+              } else if (error.description.contains('ERR_INTERNET_DISCONNECTED')) {
+                _errorMessage = 'لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال.';
+              } else if (error.description.contains('ERR_CONNECTION_REFUSED')) {
+                _errorMessage = 'تم رفض الاتصال. يرجى المحاولة مرة أخرى.';
+              } else if (!_hasLoadedSuccessfully) {
+                _errorMessage = 'خطأ في تحميل الصفحة: ${error.description}';
+              }
+            });
             debugPrint('WebView Error: ${error.description}');
           },
           onNavigationRequest: (NavigationRequest request) async {
